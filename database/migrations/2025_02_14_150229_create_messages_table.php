@@ -18,12 +18,11 @@ return new class extends Migration {
             $table->foreignIdFor(User::class)->constrained('users', 'id');
             $table->foreignIdFor(User::class, 'receiver_id')->constrained('users', 'id');
             $table->foreignIdFor(ChatChannel::class, 'channel')->constrained('chat_channel', 'uuid');
-            $table->string('type');
             $table->string('image_url')->nullable(true);
             $table->timestamps();
         });
 
-        
+
 
     }
 

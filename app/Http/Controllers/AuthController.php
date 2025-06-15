@@ -2,37 +2,56 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\ChatEvent;
-use App\Events\TestEvent;
 use App\Models\ChatChannel;
 use App\Models\Message;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
 
 
-    public function register(Request $request)
+    public function registerGoogle(Request $request)
     {
 
         $validation = $request->validate([
             'email' => ['required', 'email'],
-            'password' => ['required']
+            'provider' => ['required', Rule::in('google')]
+        ]);
+
+
+        $user = User::create([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'sex' => $request->sex ?? '',
+            'provider' => $request->provider,
+            'email' => $validation['email'],
+            'password' => ''
+        ]);
+
+        return response()->json([
+            'message' => 'Registered successfully',
+            'id' => $user
+        ]);
+    }
+
+    public function registerTraditional(Request $request)
+    {
+
+        $validation = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'min:8'],
+            'provider' => ['required', Rule::in('user')]
         ]);
 
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
-            'sex' => $request->sex,
-            'provider' => 'google',
+            'sex' => $request->sex ?? '',
+            'provider' => $request->provider,
             'email' => $validation['email'],
             'password' => $validation['password']
         ]);
@@ -42,14 +61,39 @@ class AuthController extends Controller
             'id' => $user
         ]);
     }
-    public function login(Request $request)
+    public function loginGoogle(Request $request)
     {
+
         $validation = $request->validate([
             'email' => ['required', 'email'],
-            'password' => ['required']
+            'provider' => ['required', Rule::in('google')]
         ]);
 
 
+        $user = User::where('email', $validation['email'])->first();
+
+
+        $user->tokens()->delete(); // delete previous token if exist
+
+        $token = $user->createToken($user->name . '-token')->plainTextToken;
+
+
+        return response()->json([
+            'token' => $token,
+            'id' => $user->id,
+            'email' => $user->email
+        ]);
+
+
+    }
+
+    public function loginTraditional(Request $request)
+    {
+        $validation = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'min:8'],
+            'provider' => ['required', Rule::in('user')]
+        ]);
 
         $user = User::where('email', $validation['email'])->first();
 
@@ -70,15 +114,13 @@ class AuthController extends Controller
             'email' => $user->email
         ]);
 
-
-
     }
 
-    public function logout(User $user)
+    public function logout(Request $request)
     {
-        $value = $user->tokens()->delete();
+        $user = $request->user('sanctum');
 
-        return response()->json(['id' => $value]);
+        $user->currentAccessToken()->delete();
     }
 
     public function findUserByEmail(Request $request)
@@ -159,28 +201,38 @@ class AuthController extends Controller
             'name' => ['required']
         ]);
 
+        $currentUser = $request->user('sanctum');
 
         $users_db = User::where('first_name', 'like', "{$validation['name']}%")
             ->orWhere('last_name', 'like', "{$validation['name']}%")
-            ->get();
+            ->get()->all();
 
         $users = [];
 
-        foreach ($users_db as $user) {
-            $finalUserResult = [
 
-                'id' => $user->id,
-                'firstName' => $user->first_name,
-                'lastName' => $user->last_name,
-                'email' => $user->email,
-                'sex' => $user->sex,
-                'provider' => $user->provider,
-                'profilePictureLink' => $user->profile_picture_link
-
-            ];
-            array_push($users, $finalUserResult);
+        if (count($users_db) === 0) {
+            return response()->json([
+                'code' => 4044,
+                'error' => 'User not found'
+            ]);
         }
 
+
+        foreach ($users_db as $user) {
+            if ($user->id !== $currentUser->id) {
+                $finalUserResult = [
+                    'id' => $user->id,
+                    'firstName' => $user->first_name,
+                    'lastName' => $user->last_name,
+                    'email' => $user->email,
+                    'sex' => $user->sex,
+                    'provider' => $user->provider,
+                    'profilePictureLink' => $user->profile_picture_link
+                ];
+                array_push($users, $finalUserResult);
+            }
+
+        }
         return response()->json($users);
     }
 

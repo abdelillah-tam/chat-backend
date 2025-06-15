@@ -23,11 +23,9 @@ class MessageController extends Controller
         $validation = $request->validated();
 
         $message = new Message();
-        $message->user_id = $validation['message']['senderId'];
-        $message->receiver_id = $validation['message']['receiverId'];
-        $message->message = $validation['message']['messageText'];
-        $message->type = $validation['message']['type'];
-
+        $message->user_id = $validation['senderId'];
+        $message->receiver_id = $validation['receiverId'];
+        $message->message = $request->messageText ?? '';
 
 
         $channel = ChatChannel::where(function ($query) use ($message) {
@@ -48,10 +46,16 @@ class MessageController extends Controller
             ]);
         }
 
+
         $message->channel = $channel->id;
 
+        if ($request->hasFile('image')) {
+            $imageUrl = $this->dealWithImage($request->file('image'), $message->channel);
+
+            $message->image_url = $imageUrl;
+        }
         $message->save();
-        
+
         MessageSent::dispatch($message, $channel->id);
 
     }
@@ -105,6 +109,21 @@ class MessageController extends Controller
             ];
         });
         return response()->json($mappedMessages);
+
+    }
+
+    private function dealWithImage($file, $channel)
+    {
+        $disk = Storage::disk('images');
+
+        $fileName = uuid_create() . '.jpg';
+
+        $file = $disk->putFileAs($channel, $file, $fileName);
+
+        $url = $disk->url($file);
+
+        return $url;
+
 
     }
 

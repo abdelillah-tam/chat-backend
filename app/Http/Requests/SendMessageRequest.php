@@ -23,17 +23,14 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'message'=> ['required'],
-            'message.senderId' => ['required','Integer'],
-            'message.receiverId' => ['required', 'Integer'],
-            'message.messageText' => ['required']
+            'senderId' => ['required','Integer'],
+            'receiverId' => ['required', 'Integer'],
         ];
     }
 
     public function messages(){
         return [
-            'message.senderId' => 'No id !',
-            'message.messageText' => 'Empty message !'
+            'senderId' => 'No id !'
         ];
     }
 

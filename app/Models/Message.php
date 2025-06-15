@@ -9,7 +9,6 @@ class Message extends Model
     protected $fillable = [
         'user_id',
         'message',
-        'type',
         'image_url',
         'receiver_id',
         'channel'
