@@ -44,6 +44,7 @@ class AuthController extends Controller
         $validation = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'min:8'],
+            'confirmationPassword' => ['required', 'same:password'],
             'provider' => ['required', Rule::in('user')]
         ]);
 

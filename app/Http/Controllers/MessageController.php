@@ -60,6 +60,27 @@ class MessageController extends Controller
 
     }
 
+    public function createChannel(Request $request)
+    {
+        $channel = ChatChannel::where(function ($query) use ($request) {
+            $query->where('first_user', $request['firstUser'])
+                ->where('second_user', $request['secondUser']);
+        })->orWhere(function ($query) use ($request) {
+            $query->where('first_user', $request['secondUser'])
+                ->where('second_user', $request['firstUser']);
+
+        })->first();
+
+        if (!$channel) {
+            $channel = ChatChannel::create([
+                'id' => $request['channel'],
+                'first_user' => $request['firstUser'],
+                'second_user' => $request['secondUser']
+            ]);
+        }
+
+        return response()->json($channel->id);
+    }
     public function getChatChannel(Request $request, User $user)
     {
         $currentUser = $request->user('sanctum');

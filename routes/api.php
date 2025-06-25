@@ -41,6 +41,7 @@ Route::controller(MessageController::class)->group(function () {
         Route::get('/getMessages/{channel}', 'getAllMessages');
         Route::get('/getAllChannels', 'getAllChatChannels');
         Route::get('/chatchannel/{user}', 'getChatChannel');
+        Route::post('/createChannel', 'createChannel');
     });
 });
 
