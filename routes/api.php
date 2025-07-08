@@ -1,12 +1,13 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Controller;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileImageController;
 use App\Http\Middleware\Unauthenticated;
 use Illuminate\Support\Facades\Route;
 
-
+Route::get('/data', [AuthController::class, 'data']);
 
 Route::controller(AuthController::class)->group(function () {
     Route::prefix('/register')->group(function () {
@@ -24,7 +25,8 @@ Route::controller(AuthController::class)->group(function () {
         Route::post('/findByName', 'findUserByName');
         Route::post('/findUsersByIds', 'findUsersByIds');
         Route::get('/find/{user}', 'findUserById');
-        Route::patch('/update/{user}', 'updateInfos');
+        Route::patch('/updateGoogle/{user}', 'updateGoogle');
+        Route::patch('/update/{user}', 'update');
         Route::get('/getInContact', [AuthController::class, 'getUsersInContact']);
         Route::delete('/logout/{user}', 'logout');
     });

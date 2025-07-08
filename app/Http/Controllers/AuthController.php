@@ -12,7 +12,12 @@ use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
-
+    public function data()
+    {
+        return response()->json([
+            'testing data' => 'data'
+        ]);
+    }
 
     public function registerGoogle(Request $request)
     {
@@ -280,36 +285,47 @@ class AuthController extends Controller
         return response()->json($usersInContact);
     }
 
-    public function updateInfos(Request $request, User $user)
+    public function updateGoogle(Request $request, User $user)
     {
-
-        if ($request['email'] !== "" && $request['provider'] === 'google') {
-            return response()->json([
-                'error' => "You can't change email or password because you signed up using Google"
-            ]);
-        }
-        if ($request['email']) {
-            $updated = $user->update([
-                "first_name" => $request['first_name'],
-                "last_name" => $request['last_name'],
-                "email" => $request['email']
-            ]);
-
-            return response($updated);
-        }
-
-        if (!$request['first_name'] || !$request['last_name']) {
-            return response()->json('Not changed');
-        }
-
-        $updated = $user->update([
-            "first_name" => $request['first_name'],
-            "last_name" => $request['last_name'],
+        $validation = $request->validate([
+            'first_name' => ['required'],
+            'last_name' => ['required']
         ]);
 
-        return response($updated);
+        if ($user->provider === 'google') {
+            $updatedUser = $user->update([
+                'first_name' => $validation['first_name'],
+                'last_name' => $validation['last_name']
+            ]);
+
+            return response()->json($updatedUser);
+        }
+
+        return response()->json('Something wrong!');
     }
 
+    public function update(Request $request, User $user)
+    {
+        $validation = $request->validate([
+            'first_name' => ['required'],
+            'last_name' => ['required'],
+            'email' => ['required'],
+            'password' => ['required']
+        ]);
+
+        if ($user->provider !== 'google') {
+            $updatedUser = $user->update([
+                'first_name' => $validation['first_name'],
+                'last_name' => $validation['last_name'],
+                'email' => $validation['email'],
+                'password' => $validation['password']
+            ]);
+
+            return response()->json($updatedUser);
+        }
+
+        return response()->json('Something wrong!');
+    }
 
     public function validateToken()
     {
