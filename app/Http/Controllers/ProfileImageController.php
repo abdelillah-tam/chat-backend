@@ -13,37 +13,23 @@ class ProfileImageController extends Controller
   public function uploadProfilePicture(Request $request)
   {
 
+    $validation = $request->validate([
+      'link' => ['required']
+    ]);
+
+    ;
     // return response()->json($request->hasFile('image'));
     $user = $request->user('sanctum');
 
-    $disk = Storage::disk('images');
-
-    $disk->deleteDirectory($user->id);
-
-    $disk->putFileAs($user->id, $request->file('image'), uuid_create() . '.jpg');
-
-    $files = $disk->files($user->id);
-
-    $url = $disk->url($files[0]); // because the folder contains only one image
-
-    $user->profile_picture_link = $url;
+    $user->profile_picture_link = $validation['link'];
 
     $user->save();
 
-    return response()->json($url);
+    return response()->json($user->profile_picture_link);
   }
 
   public function getProfilePicture(Request $request, User $user)
   {
-
-    $disk = Storage::disk('images');
-
-    $files = $disk->files($user->id);
-
-    if (count($files) > 0) {
-      return response()->json(['link' => $disk->url($files[0])]);
-    } else {
-      return response()->json(['link' => '']);
-    }
+    return response()->json($user->profile_picture_link);
   }
 }

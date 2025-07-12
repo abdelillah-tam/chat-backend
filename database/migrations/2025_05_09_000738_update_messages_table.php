@@ -13,7 +13,7 @@ return new class extends Migration {
     {
         //
         Schema::table('messages', function (Blueprint $table) {
-            
+
             $table->foreignUuid('channel')->references('id')->on('chat_channels');
         });
     }
@@ -24,5 +24,8 @@ return new class extends Migration {
     public function down(): void
     {
         //
+        Schema::table('messages', function (Blueprint $table) {
+            $table->dropForeign(['channel']);
+        });
     }
 };
